@@ -1,10 +1,10 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import password_validation
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext_lazy as _
 from django.db.models import F
-from django.shortcuts import get_object_or_404
 import base64
 
 from recipes.models import (
@@ -87,6 +87,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = Recipe
 
+    @staticmethod
+    def setup_eager_loading(queryset):
+        queryset = queryset.select_related('author')
+        queryset = queryset.prefetch_related('tags', 'ingredients')
+
+        return queryset
+
     def get_ingredients(self, obj):
         return obj.ingredients.values(
             'id',
@@ -115,22 +122,44 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         tag_id_list = self.initial_data.get('tags')
+        if tag_id_list is None:
+            raise ValidationError({'tags': 'Не указаны теги'})
+
+        tags = []
+        for tag in tag_id_list:
+            if not isinstance(tag, int):
+                raise ValidationError({'tags': f'{tag} - неверный формат'})
+            tag_obj = Tag.objects.filter(pk=tag)
+            if not tag_obj.exists():
+                raise ValidationError({'tags': f'Тег {tag} не найден'})
+            tags.append(tag_obj)
+
         tags = Tag.objects.filter(pk__in=tag_id_list)
         data['tags'] = tags
 
         ingredient_list = self.initial_data.get('ingredients')
         found_ingredients = []
         for ingredient in ingredient_list:
-            instance = get_object_or_404(
-                Ingredient,
-                pk=ingredient['id'],
-            )
-            if instance:
-                found_ingredients.append(
-                    {'ingredient': instance, 'amount': ingredient['amount']}
+            if not isinstance(ingredient['id'], int):
+                raise ValidationError(
+                    {'ingredients': f'{ingredient["id"]} - неверный формат id'}
                 )
-        data['ingredients'] = found_ingredients
+            # if not isinstance(ingredient['amount'], int):
+            #     raise ValidationError(
+            #         {'ingredients':
+            #             f'{ingredient["amount"]} - неверный формат amount'}
+            #     )
+            ingredient_obj = Ingredient.objects.filter(pk=ingredient['id'])
+            if not ingredient_obj.exists():
+                raise ValidationError(
+                    {'ingredients': f'id = {ingredient["id"]} не найден'}
+                )
+            found_ingredients.append(
+                {'ingredient': ingredient_obj.first(),
+                 'amount': ingredient['amount']}
+            )
 
+        data['ingredients'] = found_ingredients
         return super().validate(data)
 
     def create(self, validated_data):

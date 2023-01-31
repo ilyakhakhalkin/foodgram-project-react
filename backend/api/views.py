@@ -52,12 +52,17 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = CustomPageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (ReadOrAuthorOrAdmin,)
+
+    def get_queryset(self):
+        queryset = Recipe.objects.all()
+        queryset = self.get_serializer_class().setup_eager_loading(queryset)
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)

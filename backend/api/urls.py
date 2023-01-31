@@ -14,8 +14,7 @@ router = DefaultRouter()
 router.register('users', UserViewSet)
 router.register('tags', TagViewSet)
 router.register('ingredients', IngredientViewSet)
-router.register('recipes', RecipeViewSet)
-
+router.register('recipes', RecipeViewSet, basename='recipe')
 
 urlpatterns = [
     path('auth/token/login/', CustomAuthToken.as_view()),
