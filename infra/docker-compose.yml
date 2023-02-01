@@ -9,9 +9,7 @@ services:
       - ../.env
 
   backend:
-    build:
-      image: ilyakhakhalkin/foodgram_backend:latest
-      dockerfile: Dockerfile
+    image: ilyakhakhalkin/foodgram_backend:latest
     restart: always
     command: >
       bash -c "python manage.py makemigrations &&
@@ -27,9 +25,7 @@ services:
       - ../.env
 
   frontend:
-    build:
-      image: ilyakhakhalkin/foodgram_frontend:latest
-      dockerfile: Dockerfile
+    image: ilyakhakhalkin/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
