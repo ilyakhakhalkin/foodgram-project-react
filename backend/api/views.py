@@ -44,8 +44,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Recipe.objects.all()
-        queryset = self.get_serializer_class().setup_eager_loading(queryset)
-        return queryset
+        return self.get_serializer_class().setup_eager_loading(queryset)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -62,8 +61,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.method == 'POST':
             return self.add_favorite(request.user, recipe)
 
-        elif self.request.method == 'DELETE':
-            return self.delete_favorite(request.user, recipe)
+        return self.delete_favorite(request.user, recipe)
 
     def add_favorite(self, user, recipe) -> Response:
         """
@@ -106,10 +104,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def shopping_cart(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
+
         if self.request.method == 'POST':
             return self.add_to_cart(request.user, recipe)
-        elif self.request.method == 'DELETE':
-            return self.delete_from_cart(request.user, recipe)
+
+        return self.delete_from_cart(request.user, recipe)
 
     def add_to_cart(self, user, recipe):
         """
@@ -242,9 +241,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             return self.create_subscription(follower=request.user,
                                             following=to_follow)
-        elif request.method == 'DELETE':
-            return self.delete_subscription(follower=request.user,
-                                            following=to_follow)
+
+        return self.delete_subscription(follower=request.user,
+                                        following=to_follow)
 
     def create_subscription(self, follower, following):
         sub = Subscription.objects.filter(follower=follower,
