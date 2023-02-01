@@ -5,11 +5,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import (
-    DjangoFilterBackend,
-)
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from django.db import IntegrityError
 from django.db.models import Sum, F
 from django.http import HttpResponse
 
@@ -61,50 +58,59 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Recipe.objects.all()
         queryset = self.get_serializer_class().setup_eager_loading(queryset)
-
         return queryset
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated],
-            serializer_class=RecipeShortInfo)
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated],
+        serializer_class=RecipeShortInfo
+    )
     def favorite(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
+
         if self.request.method == 'POST':
             return self.add_favorite(request.user, recipe)
+
         elif self.request.method == 'DELETE':
             return self.delete_favorite(request.user, recipe)
 
-    def add_favorite(self, user, recipe):
-        try:
-            serializer = RecipeShortInfo(recipe)
-            RecipeUserFavorites.objects.create(user=user,
-                                               recipe=recipe)
-            return Response(serializer.data,
-                            status=status.HTTP_201_CREATED)
-
-        except IntegrityError as e:
-            msg = str(e)
-            if 'UNIQUE' in str(e):
-                msg = 'Рецепт уже есть в избранном'
-            return Response(data={'errors': msg},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-    def delete_favorite(self, user, recipe):
-        try:
-            RecipeUserFavorites.objects.get(
-                user=user,
-                recipe=recipe
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        except RecipeUserFavorites.DoesNotExist:
+    def add_favorite(self, user, recipe) -> Response:
+        """
+        Добавление рецепта в избранное.
+        """
+        fav_recipe = RecipeUserFavorites.objects.filter(
+            user=user,
+            recipe=recipe
+        )
+        if fav_recipe.exists():
             return Response(
-                data={'errors': 'Этого рецепта нет в избранном'},
+                data={'errors': 'Рецепт уже есть в избранном'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        serializer = RecipeShortInfo(recipe)
+        RecipeUserFavorites.objects.create(user=user, recipe=recipe)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete_favorite(self, user, recipe):
+        """
+        Удаление рецепта из избранного.
+        """
+        fav_recipe = RecipeUserFavorites.objects.filter(
+            user=user,
+            recipe=recipe
+        )
+        if fav_recipe.exists():
+            fav_recipe.first().delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        return Response(data={'errors': 'Этого рецепта нет в избранном'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=True, methods=['post', 'delete'],
@@ -119,33 +125,39 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return self.delete_from_cart(request.user, recipe)
 
     def add_to_cart(self, user, recipe):
-        try:
-            serializer = RecipeShortInfo(recipe)
-            ShoppingCart.objects.create(user=user,
-                                        recipe=recipe)
-            return Response(serializer.data,
-                            status=status.HTTP_201_CREATED)
-
-        except IntegrityError as e:
-            msg = str(e)
-            if 'UNIQUE' in str(e):
-                msg = 'Рецепт уже есть в корзине'
-            return Response(data={'errors': msg},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-    def delete_from_cart(self, user, recipe):
-        try:
-            ShoppingCart.objects.get(
-                user=user,
-                recipe=recipe
-            ).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-
-        except RecipeUserFavorites.DoesNotExist:
+        """
+        Добавление рецепта в список покупок.
+        """
+        serializer = RecipeShortInfo(recipe)
+        cart_recipe = ShoppingCart.objects.filter(
+            user=user,
+            recipe=recipe
+        )
+        if cart_recipe.exists():
             return Response(
-                data={'errors': 'Этого рецепта нет в корзине'},
+                data={'errors': 'Рецепт уже есть в корзине'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        ShoppingCart.objects.create(user=user, recipe=recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete_from_cart(self, user, recipe):
+        """
+        Удаление рецепта из списка покупок.
+        """
+        cart_recipe = ShoppingCart.objects.filter(
+            user=user,
+            recipe=recipe
+        )
+        if cart_recipe.exists():
+            cart_recipe.first().delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        return Response(
+            data={'errors': 'Этого рецепта нет в корзине'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(detail=False)
     def download_shopping_cart(self, request):
@@ -178,7 +190,6 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = CustomPageNumberPagination
-    permission_classes = []
 
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -220,8 +231,18 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post', 'delete'],
-            permission_classes=[IsAuthenticated])
+    def get_subscribtion_serializer(self, *args, **kwargs):
+        kwargs.setdefault(
+            'context',
+            self.get_serializer_context()
+        )
+        return SubscriptionSerializer(*args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=[IsAuthenticated]
+    )
     def subscribe(self, request, pk=None):
         if request.user.is_anonymous:
             return Response(
@@ -238,42 +259,31 @@ class UserViewSet(viewsets.ModelViewSet):
             return self.delete_subscription(follower=request.user,
                                             following=to_follow)
 
-    def get_subscribtion_serializer(self, *args, **kwargs):
-        kwargs.setdefault('context', self.get_serializer_context())
-        return SubscriptionSerializer(*args, **kwargs)
-
     def create_subscription(self, follower, following):
-        try:
-            Subscription.objects.create(
-                follower=follower,
-                following=following
-            )
-            serializer = self.get_subscribtion_serializer(following)
+        sub = Subscription.objects.filter(follower=follower,
+                                          following=following)
+        if sub.exists():
             return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
+                data={'errors': 'Нельзя подписаться дважды'},
+                status=status.HTTP_400_BAD_REQUEST
             )
-
-        except IntegrityError as e:
-            msg = str(e).split(':')[1]
-            if 'UNIQUE' in str(e):
-                msg = 'Нельзя подписаться дважды'
-
-            return Response(data={'errors': msg},
-                            status=status.HTTP_400_BAD_REQUEST)
+        Subscription.objects.create(follower=follower,
+                                    following=following)
+        serializer = self.get_subscribtion_serializer(following)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED
+        )
 
     def delete_subscription(self, follower, following):
-        try:
-            Subscription.objects.get(
-                follower=follower,
-                following=following
-            ).delete()
-
+        sub = Subscription.objects.filter(follower=follower,
+                                          following=following)
+        if sub.exists():
+            sub.first().delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        except Subscription.DoesNotExist:
-            return Response(data={'errors': 'Вы не подписаны на этого автора'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'errors': 'Вы не подписаны на этого автора'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 class CustomAuthToken(ObtainAuthToken):

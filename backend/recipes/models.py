@@ -1,13 +1,15 @@
 from django.db import models
 from django.utils.html import format_html
+from colorfield.fields import ColorField
 
 from users.models import User
+from .validators import validate_amount, validate_cooking_time
 
 
 class Tag(models.Model):
-    name = models.CharField('Название', max_length=50)
-    slug = models.SlugField('Адрес', max_length=30)
-    color = models.CharField('Цвет', max_length=7, default='#ffffff')
+    name = models.CharField('Название', max_length=50, unique=True)
+    slug = models.SlugField('Адрес', max_length=30, unique=True)
+    color = ColorField('Цвет', unique=True)
 
     class Meta:
         verbose_name = 'Тег'
@@ -50,12 +52,12 @@ class Recipe(models.Model):
                                on_delete=models.CASCADE,
                                )
     name = models.CharField('Название', max_length=200,)
-    text = models.TextField('Описание',)
-    image = models.ImageField('Изоюражение',
-                              upload_to='recipe_images',
-                              blank=True,
-                              )
-    cooking_time = models.IntegerField('Время приготовления (в минутах)')
+    text = models.TextField('Описание')
+    image = models.ImageField('Изображение', upload_to='recipe_images')
+    cooking_time = models.PositiveSmallIntegerField(
+        'Время приготовления',
+        validators=[validate_cooking_time]
+    )
 
     tags = models.ManyToManyField(
         Tag,
@@ -113,7 +115,9 @@ class RecipeIngredient(models.Model):
                                    verbose_name='Ингредиент',
                                    on_delete=models.CASCADE,
                                    )
-    amount = models.PositiveIntegerField('Количество', default=1)
+    amount = models.PositiveSmallIntegerField('Количество',
+                                              default=1,
+                                              validators=[validate_amount])
 
     class Meta:
         verbose_name = 'Ингредиент рецепта'

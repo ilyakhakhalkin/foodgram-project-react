@@ -3,7 +3,6 @@ from rest_framework.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import password_validation
 from django.core.files.base import ContentFile
-from django.utils.translation import gettext_lazy as _
 from django.db.models import F
 import base64
 
@@ -23,13 +22,13 @@ from users.models import (
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'name', 'color', 'slug',)
         model = Tag
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit',)
         model = Ingredient
 
 
@@ -56,13 +55,11 @@ class UserSerializer(serializers.ModelSerializer):
         return super(UserSerializer, self).create(validated_data)
 
     def get_subs(self, obj):
-        request = self.context.get('request', None)
-        if request and not request.user.is_anonymous:
-            return Subscription.objects.filter(
-                    follower=request.user,
-                    following=obj.id
-                ).exists()
-        return False
+        user = getattr(self.context.get('request'), 'user', None)
+        return Subscription.objects.filter(
+            follower=getattr(user, 'id', None),
+            following=getattr(obj, 'id', None)
+        ).exists()
 
 
 class Base64ImageField(serializers.ImageField):
@@ -84,7 +81,17 @@ class RecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
-        fields = '__all__'
+        fields = ('id',
+                  'tags',
+                  'author',
+                  'ingredients',
+                  'is_favorited',
+                  'is_in_shopping_cart',
+                  'name',
+                  'image',
+                  'text',
+                  'cooking_time',
+                  )
         model = Recipe
 
     @staticmethod
@@ -103,30 +110,20 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     def get_favorites(self, obj):
-        request = self.context.get('request', None)
-        if request and not request.user.is_anonymous:
-            return RecipeUserFavorites.objects.filter(
-                    user=request.user,
-                    recipe=obj.id
-                ).exists()
-        return False
+        return is_in_database(self.context, RecipeUserFavorites, obj)
 
     def get_cart(self, obj):
-        request = self.context.get('request', None)
-        if request and not request.user.is_anonymous:
-            return ShoppingCart.objects.filter(
-                    user=request.user,
-                    recipe=obj.id
-                ).exists()
-        return False
+        return is_in_database(self.context, ShoppingCart, obj)
 
     def validate(self, data):
-        tag_id_list = self.initial_data.get('tags')
-        if tag_id_list is None:
+        tags_id = self.initial_data.get('tags')
+        if tags_id is None or len(tags_id) == 0:
             raise ValidationError({'tags': 'Не указаны теги'})
-
+        if not isinstance(tags_id, list):
+            raise ValidationError({'tags': 'неверный формат'})
+        tags_id = set(tags_id)
         tags = []
-        for tag in tag_id_list:
+        for tag in tags_id:
             if not isinstance(tag, int):
                 raise ValidationError({'tags': f'{tag} - неверный формат'})
             tag_obj = Tag.objects.filter(pk=tag)
@@ -134,21 +131,22 @@ class RecipeSerializer(serializers.ModelSerializer):
                 raise ValidationError({'tags': f'Тег {tag} не найден'})
             tags.append(tag_obj)
 
-        tags = Tag.objects.filter(pk__in=tag_id_list)
+        tags = Tag.objects.filter(pk__in=tags_id)
         data['tags'] = tags
 
-        ingredient_list = self.initial_data.get('ingredients')
+        ingredients = self.initial_data.get('ingredients')
+        if len(ingredients) == 0:
+            raise ValidationError({'ingredients': 'Не указаны ингредиенты'})
+        if not isinstance(ingredients, list):
+            raise ValidationError({'ingredients': 'неверный формат'})
+
         found_ingredients = []
-        for ingredient in ingredient_list:
+        ingredients = list({elem['id']: elem for elem in ingredients}.values())
+        for ingredient in ingredients:
             if not isinstance(ingredient['id'], int):
                 raise ValidationError(
                     {'ingredients': f'{ingredient["id"]} - неверный формат id'}
                 )
-            # if not isinstance(ingredient['amount'], int):
-            #     raise ValidationError(
-            #         {'ingredients':
-            #             f'{ingredient["amount"]} - неверный формат amount'}
-            #     )
             ingredient_obj = Ingredient.objects.filter(pk=ingredient['id'])
             if not ingredient_obj.exists():
                 raise ValidationError(
@@ -200,7 +198,7 @@ class PasswordChangeSerializer(serializers.Serializer):
         user = self.context['request'].user
         if not user.check_password(value):
             raise serializers.ValidationError(
-                _('Неправильный пароль')
+                ('Неправильный пароль')
             )
         return value
 
@@ -232,3 +230,11 @@ class SubscriptionSerializer(UserSerializer):
 class RecipeShortInfo(RecipeSerializer):
     class Meta(RecipeSerializer.Meta):
         fields = ('id', 'name', 'image', 'cooking_time')
+
+
+def is_in_database(context, model, obj):
+    user = getattr(context.get('request'), 'user', None)
+    return model.objects.filter(
+        user=getattr(user, 'id', None),
+        recipe=getattr(obj, 'id', None)
+    ).exists()

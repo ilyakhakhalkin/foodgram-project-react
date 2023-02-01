@@ -45,11 +45,12 @@ class Subscription(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['follower', 'following'],
                                     name='Нельзя подписаться дважды'),
-            models.CheckConstraint(
-                check=~models.Q(follower=models.F('following')),
-                name='Нельзя подписаться на себя',
-                ),
         ]
+
+    def clean(self) -> None:
+        if self.follower == self.following:
+            raise ValueError('Нельзя подписаться на себя')
+        return super().clean()
 
 
 class ShoppingCart(models.Model):
