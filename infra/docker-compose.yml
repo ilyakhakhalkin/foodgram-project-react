@@ -10,7 +10,7 @@ services:
 
   backend:
     build:
-      context: ../backend
+      image: ilyakhakhalkin/foodgram_backend:latest
       dockerfile: Dockerfile
     restart: always
     command: >
@@ -28,7 +28,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      image: ilyakhakhalkin/foodgram_frontend:latest
       dockerfile: Dockerfile
     volumes:
       - ../frontend/:/app/result_build/
