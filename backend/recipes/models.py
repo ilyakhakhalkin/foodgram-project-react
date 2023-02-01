@@ -1,8 +1,9 @@
+from colorfield.fields import ColorField
 from django.db import models
 from django.utils.html import format_html
-from colorfield.fields import ColorField
 
 from users.models import User
+
 from .validators import validate_amount, validate_cooking_time
 
 

@@ -1,8 +1,8 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django_filters import rest_framework
-from django_filters.filters import Filter
-from django_filters.conf import settings as django_filters_settings
 from django.db.models.constants import LOOKUP_SEP
+from django_filters import rest_framework
+from django_filters.conf import settings as django_filters_settings
+from django_filters.filters import Filter
 
 from recipes.models import Recipe
 

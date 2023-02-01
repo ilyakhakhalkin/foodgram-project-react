@@ -1,23 +1,15 @@
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth import password_validation
-from django.core.files.base import ContentFile
-from django.db.models import F
 import base64
 
-from recipes.models import (
-    Tag,
-    Ingredient,
-    Recipe,
-    RecipeUserFavorites,
-    RecipeIngredient,
-)
-from users.models import (
-    User,
-    Subscription,
-    ShoppingCart,
-)
+from django.contrib.auth import password_validation
+from django.contrib.auth.hashers import make_password
+from django.core.files.base import ContentFile
+from django.db.models import F
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
+from recipes.models import (Ingredient, Recipe, RecipeIngredient,
+                            RecipeUserFavorites, Tag)
+from users.models import ShoppingCart, Subscription, User
 
 
 class TagSerializer(serializers.ModelSerializer):

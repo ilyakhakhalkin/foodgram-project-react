@@ -1,10 +1,6 @@
 from django.contrib import admin
 
-from .models import (
-    User,
-    Subscription,
-    ShoppingCart,
-)
+from .models import ShoppingCart, Subscription, User
 
 
 @admin.register(User)

@@ -1,39 +1,26 @@
-from rest_framework import views, viewsets, status
-from rest_framework.exceptions import AuthenticationFailed
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.authtoken.models import Token
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
-from django.db.models import Sum, F
+from django.db.models import F, Sum
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, views, viewsets
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from recipes.models import (
-    Tag,
-    Ingredient,
-    Recipe,
-    RecipeUserFavorites,
-    RecipeIngredient,
-)
-from users.models import (
-    User,
-    Subscription,
-    ShoppingCart,
-)
-from .serializers import (
-    TagSerializer,
-    IngredientSerializer,
-    RecipeSerializer,
-    UserSerializer,
-    PasswordChangeSerializer,
-    SubscriptionSerializer,
-    RecipeShortInfo,
-)
-from .filters import RecipeFilter, IngredientFilter
-from .permissions import ReadOrAuthorOrAdmin
+from recipes.models import (Ingredient, Recipe, RecipeIngredient,
+                            RecipeUserFavorites, Tag)
+from users.models import ShoppingCart, Subscription, User
+
+from .filters import IngredientFilter, RecipeFilter
 from .paginators import CustomPageNumberPagination
+from .permissions import ReadOrAuthorOrAdmin
+from .serializers import (IngredientSerializer, PasswordChangeSerializer,
+                          RecipeSerializer, RecipeShortInfo,
+                          SubscriptionSerializer, TagSerializer,
+                          UserSerializer)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
