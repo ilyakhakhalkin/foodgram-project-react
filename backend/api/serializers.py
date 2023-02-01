@@ -89,9 +89,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     @staticmethod
     def setup_eager_loading(queryset):
         queryset = queryset.select_related('author')
-        queryset = queryset.prefetch_related('tags', 'ingredients')
-
-        return queryset
+        return queryset.prefetch_related('tags', 'ingredients')
 
     def get_ingredients(self, obj):
         return obj.ingredients.values(
