@@ -66,6 +66,7 @@ jobs:
         script: |
           sudo mkdir foodgram
           cd foodgram
+          sudo systemctl stop nginx
           sudo docker-compose stop
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_backend
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend
