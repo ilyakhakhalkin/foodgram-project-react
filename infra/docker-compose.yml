@@ -10,6 +10,7 @@ services:
       - .env
 
   backend:
+    platform: linux/x86_64
     container_name: back
     image: ilyakhakhalkin/foodgram_backend:latest
     restart: always
@@ -28,6 +29,7 @@ services:
       - .env
 
   frontend:
+    platform: linux/x86_64
     container_name: front
     image: ilyakhakhalkin/foodgram_frontend:latest
     volumes:
