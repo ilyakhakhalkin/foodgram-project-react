@@ -105,49 +105,40 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_cart(self, obj):
         return is_in_database(self.context, ShoppingCart, obj)
 
+    def get_tags_and_ingredients(self):
+        tag_id_list = set(self.initial_data.get('tags', []))
+        tags_queryset = Tag.objects.filter(pk__in=tag_id_list)
+
+        ing_data = self.initial_data.get('ingredients', [])
+        filtered_data = {el.get('id'): el.get('amount', 1) for el in ing_data}
+
+        ingredients_queryset = Ingredient.objects.filter(
+            pk__in=filtered_data.keys()
+        )
+        ingredients = []
+        for ingredient in ingredients_queryset:
+            ingredients.append({
+                'ingredient': ingredient,
+                'amount': filtered_data[ingredient.id]
+            })
+
+        return [tag for tag in tags_queryset], ingredients
+
     def validate(self, data):
-        tags_id = self.initial_data.get('tags')
-        if tags_id is None or len(tags_id) == 0:
-            raise ValidationError({'tags': 'Не указаны теги'})
-        if not isinstance(tags_id, list):
-            raise ValidationError({'tags': 'неверный формат'})
-        tags_id = set(tags_id)
-        tags = []
-        for tag in tags_id:
-            if not isinstance(tag, int):
-                raise ValidationError({'tags': f'{tag} - неверный формат'})
-            tag_obj = Tag.objects.filter(pk=tag)
-            if not tag_obj.exists():
-                raise ValidationError({'tags': f'Тег {tag} не найден'})
-            tags.append(tag_obj)
-
-        tags = Tag.objects.filter(pk__in=tags_id)
-        data['tags'] = tags
-
-        ingredients = self.initial_data.get('ingredients')
+        tags, ingredients = self.get_tags_and_ingredients()
+        print(tags, '\n')
+        print(ingredients, '\n')
+        if len(tags) == 0:
+            raise ValidationError('Теги не указаны или не найдены')
+        if len(tags) < len(self.initial_data.get('tags')):
+            raise ValidationError('Неверный формат тегов')
         if len(ingredients) == 0:
-            raise ValidationError({'ingredients': 'Не указаны ингредиенты'})
-        if not isinstance(ingredients, list):
-            raise ValidationError({'ingredients': 'неверный формат'})
+            raise ValidationError('Ингридиенты не указаны или не найдены')
+        if len(ingredients) < len(self.initial_data.get('ingredients')):
+            raise ValidationError('Неверный формат ингредиентов')
 
-        found_ingredients = []
-        ingredients = list({elem['id']: elem for elem in ingredients}.values())
-        for ingredient in ingredients:
-            if not isinstance(ingredient['id'], int):
-                raise ValidationError(
-                    {'ingredients': f'{ingredient["id"]} - неверный формат id'}
-                )
-            ingredient_obj = Ingredient.objects.filter(pk=ingredient['id'])
-            if not ingredient_obj.exists():
-                raise ValidationError(
-                    {'ingredients': f'id = {ingredient["id"]} не найден'}
-                )
-            found_ingredients.append(
-                {'ingredient': ingredient_obj.first(),
-                 'amount': ingredient['amount']}
-            )
-
-        data['ingredients'] = found_ingredients
+        data['tags'] = tags
+        data['ingredients'] = ingredients
         return super().validate(data)
 
     def create(self, validated_data):
