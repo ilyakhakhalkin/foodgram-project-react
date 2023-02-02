@@ -126,8 +126,6 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         tags, ingredients = self.get_tags_and_ingredients()
-        print(tags, '\n')
-        print(ingredients, '\n')
         if len(tags) == 0:
             raise ValidationError('Теги не указаны или не найдены')
         if len(tags) < len(self.initial_data.get('tags')):
