@@ -106,20 +106,24 @@ class RecipeSerializer(serializers.ModelSerializer):
         return is_in_database(self.context, ShoppingCart, obj)
 
     def get_tags_and_ingredients(self):
-        tag_id_list = set(self.initial_data.get('tags', []))
+        tag_id_list = parse_to_int(
+            set(self.initial_data.get('tags', []))
+        )
         tags_queryset = Tag.objects.filter(pk__in=tag_id_list)
 
         ing_data = self.initial_data.get('ingredients', [])
-        filtered_data = {el.get('id'): el.get('amount', 1) for el in ing_data}
+        unique_ingredients = parse_to_int({
+            el.get('id'): el.get('amount', 1) for el in ing_data
+        })
 
         ingredients_queryset = Ingredient.objects.filter(
-            pk__in=filtered_data.keys()
+            pk__in=unique_ingredients.keys()
         )
         ingredients = []
         for ingredient in ingredients_queryset:
             ingredients.append({
                 'ingredient': ingredient,
-                'amount': filtered_data[ingredient.id]
+                'amount': unique_ingredients[ingredient.id]
             })
 
         return [tag for tag in tags_queryset], ingredients
@@ -217,3 +221,27 @@ def is_in_database(context, model, obj):
         user=getattr(user, 'id', None),
         recipe=getattr(obj, 'id', None)
     ).exists()
+
+
+def parse_to_int(data, whois='id тега'):
+    if isinstance(data, int):
+        return data
+
+    if isinstance(data, str):
+        if not data.isnumeric():
+            raise ValidationError(whois + ' должен быть числом')
+        return int(data)
+
+    if isinstance(data, list) or isinstance(data, set):
+        return [parse_to_int(elem) for elem in data]
+
+    if isinstance(data, dict):
+        parsed_dict = {}
+        for key, value in data.items():
+            k = parse_to_int(key, 'id ингредиента')
+            v = parse_to_int(value, 'amount ингредиента')
+            parsed_dict[k] = v
+
+        return parsed_dict
+
+    raise ValidationError(f'Неверный формат {whois}')
