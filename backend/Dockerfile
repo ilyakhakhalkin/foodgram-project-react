@@ -7,6 +7,6 @@ RUN apt-get update \
 
 RUN pip3 install -r requirements.txt --no-cache-dir
 
-COPY ./backend/media $APP_HOME/media
+COPY ./media back/media
 
 CMD gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000
