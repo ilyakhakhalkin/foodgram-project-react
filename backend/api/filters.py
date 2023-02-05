@@ -14,7 +14,7 @@ class IngredientFilter(rest_framework.FilterSet):
 class RecipeFilter(rest_framework.FilterSet):
     author = rest_framework.ModelChoiceFilter(
         queryset=User.objects.all(),
-        to_field_name='username'
+        to_field_name='id'
     )
     tags = rest_framework.AllValuesMultipleFilter(field_name='tags__slug')
     is_in_shopping_cart = rest_framework.BooleanFilter(method='filter_by_cart')
