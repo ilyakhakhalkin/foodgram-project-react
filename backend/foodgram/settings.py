@@ -66,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
-if os.environ.get('DJANGO_DEVELOPMENT', 'True'):
+if os.environ.get('DJANGO_DEVELOPMENT') == 'True':
     DEBUG = True
     DATABASES = {
         'default': {
