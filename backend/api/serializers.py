@@ -170,10 +170,20 @@ class RecipeSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class SubscriptionRecipeListSerializer(serializers.ListSerializer):
+    def to_representation(self, data):
+        limit = self.context.get('request').query_params.get('recipes_limit')
+        if limit.isnumeric():
+            data = data.all()[:int(limit)]
+
+        return super().to_representation(data)
+
+
 class RecipeShortInfo(RecipeSerializer):
     class Meta(RecipeSerializer.Meta):
         fields = ('id', 'name', 'image', 'cooking_time')
         read_only_fields = ('id', 'name', 'image', 'cooking_time')
+        list_serializer_class = SubscriptionRecipeListSerializer
 
 
 class SubscriptionSerializer(UserSerializer):
