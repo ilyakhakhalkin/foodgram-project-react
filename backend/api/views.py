@@ -203,8 +203,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def subscriptions(self, request):
-        self.get_serializer
-
         following = Subscription.objects.filter(follower=request.user)
         queryset = User.objects.filter(following__in=following)
 

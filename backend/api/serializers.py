@@ -12,6 +12,16 @@ from recipes.models import (Ingredient, Recipe, RecipeIngredient,
 from users.models import ShoppingCart, Subscription, User
 
 
+class Base64ImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if isinstance(data, str) and data.startswith('data:image'):
+            format, imgstr = data.split(';base64,')
+            ext = format.split('/')[-1]
+            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+
+        return super().to_internal_value(data)
+
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'name', 'color', 'slug',)
@@ -52,16 +62,6 @@ class UserSerializer(serializers.ModelSerializer):
             follower=getattr(user, 'id', None),
             following=getattr(obj, 'id', None)
         ).exists()
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -170,6 +170,23 @@ class RecipeSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class RecipeShortInfo(RecipeSerializer):
+    class Meta(RecipeSerializer.Meta):
+        fields = ('id', 'name', 'image', 'cooking_time')
+        read_only_fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class SubscriptionSerializer(UserSerializer):
+    recipes = RecipeShortInfo(many=True)
+    recipes_count = serializers.SerializerMethodField('get_recipes_count')
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count')
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+
 class PasswordChangeSerializer(serializers.Serializer):
     current_password = serializers.CharField(write_only=True, required=True)
     new_password = serializers.CharField(write_only=True, required=True)
@@ -197,22 +214,6 @@ class PasswordChangeSerializer(serializers.Serializer):
         user.set_password(password)
         user.save()
         return user
-
-
-class SubscriptionSerializer(UserSerializer):
-    recipes = RecipeSerializer(many=True)
-    recipes_count = serializers.SerializerMethodField('get_recipes_count')
-
-    class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + ('recipes', 'recipes_count')
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
-
-
-class RecipeShortInfo(RecipeSerializer):
-    class Meta(RecipeSerializer.Meta):
-        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 def is_in_database(context, model, obj):
