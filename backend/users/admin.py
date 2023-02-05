@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group
+from rest_framework.authtoken.models import TokenProxy
 
 from .models import ShoppingCart, Subscription, User
 
@@ -32,3 +34,7 @@ class ShoppingCartAdmin(admin.ModelAdmin):
                     'user',
                     'recipe',
                     )
+
+
+admin.site.unregister(Group)
+admin.site.unregister(TokenProxy)
