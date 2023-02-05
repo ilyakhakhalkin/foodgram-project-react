@@ -13,7 +13,7 @@ class User(AbstractUser):
     shopping_cart = models.ManyToManyField(
         'recipes.Recipe',
         verbose_name='Список покупок',
-        related_name='cart',
+        related_name='cart_owner',
         through='ShoppingCart',
     )
 

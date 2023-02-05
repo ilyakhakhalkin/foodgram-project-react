@@ -1,6 +1,5 @@
 from colorfield.fields import ColorField
 from django.db import models
-from django.utils.html import format_html
 
 from users.models import User
 
@@ -15,19 +14,6 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
-
-    def colored_name(self):
-        return format_html(
-            '''<span style="background-color: {}">
-                <span style="background: inherit;
-                            background-clip: text;
-                            -webkit-background-clip: text;
-                            color: transparent;
-                            filter: invert(1) grayscale(1);
-                            -webkit-filter: invert(1) grayscale(1);">{}</span>
-            </span>''',
-            self.color, self.color,
-        )
 
     def __str__(self) -> str:
         return self.name

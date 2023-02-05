@@ -70,7 +70,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = serializers.SerializerMethodField('get_ingredients')
     is_favorited = serializers.SerializerMethodField('get_favorites')
     is_in_shopping_cart = serializers.SerializerMethodField('get_cart')
-    image = Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField()
 
     class Meta:
         fields = ('id',

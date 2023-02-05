@@ -91,7 +91,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe=recipe
         )
         if fav_recipe.exists():
-            fav_recipe.first().delete()
+            fav_recipe.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(data={'errors': 'Этого рецепта нет в избранном'},
@@ -263,7 +263,7 @@ class UserViewSet(viewsets.ModelViewSet):
         sub = Subscription.objects.filter(follower=follower,
                                           following=following)
         if sub.exists():
-            sub.first().delete()
+            sub.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(data={'errors': 'Вы не подписаны на этого автора'},
