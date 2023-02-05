@@ -15,7 +15,8 @@ from recipes.models import (Ingredient, Recipe, RecipeIngredient,
 from users.models import ShoppingCart, Subscription, User
 
 from .filters import IngredientFilter, RecipeFilter
-from .paginators import CustomPageNumberPagination
+from .paginators import (CustomPageNumberPagination,
+                         CustomRecipesLimitPagination)
 from .permissions import ReadOrAuthorOrAdmin
 from .serializers import (IngredientSerializer, PasswordChangeSerializer,
                           RecipeSerializer, RecipeShortInfo,
@@ -201,7 +202,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False)
+    @action(detail=False, pagination_class=CustomRecipesLimitPagination)
     def subscriptions(self, request):
         following = Subscription.objects.filter(follower=request.user)
         queryset = User.objects.filter(following__in=following)

@@ -32,5 +32,4 @@ class RecipeFilter(rest_framework.FilterSet):
     def filter_by_favorites(self, queryset, name, value):
         if value and self.request.user.is_authenticated:
             return queryset.filter(favorite_recipes=self.request.user)
-
         return queryset
