@@ -1,9 +1,7 @@
 from django.core.exceptions import ValidationError
 
-from foodgram.settings import (MAX_COOKING_TIME,
-                               MIN_COOKING_TIME,
-                               MAX_INGREDIENT_AMOUNT,
-                               MIN_INGREDIENT_AMOUNT)
+from foodgram.settings import (MAX_COOKING_TIME, MAX_INGREDIENT_AMOUNT,
+                               MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT)
 
 
 def validate_amount(value):
@@ -20,7 +18,7 @@ def validate_amount(value):
 def validate_cooking_time(value):
     if value < MIN_COOKING_TIME:
         raise ValidationError(
-            f'''Время приготовления не может быть меньше {MIN_COOKING_TIME} минуты'''
+            f'''Время приготовления не может быть меньше {MIN_COOKING_TIME}'''
         )
     if value > MAX_COOKING_TIME:
         raise ValidationError(

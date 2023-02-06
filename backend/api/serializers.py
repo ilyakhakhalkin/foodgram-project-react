@@ -7,11 +7,10 @@ from django.db.models import F
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from foodgram.settings import MAX_INGREDIENT_AMOUNT, MIN_INGREDIENT_AMOUNT
 from recipes.models import (Ingredient, Recipe, RecipeIngredient,
                             RecipeUserFavorites, Tag)
 from users.models import ShoppingCart, Subscription, User
-from foodgram.settings import (MAX_INGREDIENT_AMOUNT,
-                               MIN_INGREDIENT_AMOUNT)
 
 
 class Base64ImageField(serializers.ImageField):
