@@ -43,7 +43,7 @@ class Recipe(models.Model):
     image = models.ImageField('Изображение', upload_to='recipe_images')
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления',
-        validators=[validate_cooking_time]
+        validators=(validate_cooking_time,),
     )
 
     tags = models.ManyToManyField(
@@ -104,7 +104,7 @@ class RecipeIngredient(models.Model):
                                    )
     amount = models.PositiveSmallIntegerField('Количество',
                                               default=1,
-                                              validators=[validate_amount])
+                                              validators=(validate_amount,))
 
     class Meta:
         verbose_name = 'Ингредиент рецепта'

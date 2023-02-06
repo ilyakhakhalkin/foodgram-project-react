@@ -10,6 +10,8 @@ from rest_framework.exceptions import ValidationError
 from recipes.models import (Ingredient, Recipe, RecipeIngredient,
                             RecipeUserFavorites, Tag)
 from users.models import ShoppingCart, Subscription, User
+from foodgram.settings import (MAX_INGREDIENT_AMOUNT,
+                               MIN_INGREDIENT_AMOUNT)
 
 
 class Base64ImageField(serializers.ImageField):
@@ -130,6 +132,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         tags, ingredients = self.get_tags_and_ingredients()
+
         if len(tags) == 0:
             raise ValidationError('Теги не указаны или не найдены')
         if len(tags) < len(self.initial_data.get('tags')):
@@ -139,14 +142,25 @@ class RecipeSerializer(serializers.ModelSerializer):
         if len(ingredients) < len(self.initial_data.get('ingredients')):
             raise ValidationError('Неверный формат ингредиентов')
 
+        for ing in ingredients:
+            if ing['amount'] > MAX_INGREDIENT_AMOUNT:
+                raise ValidationError(f'''Количество ингредиента не может
+                                      превышать {MAX_INGREDIENT_AMOUNT}''')
+            if ing['amount'] < MIN_INGREDIENT_AMOUNT:
+                raise ValidationError(f'''Количество ингредиента не может
+                                      быть меньше {MIN_INGREDIENT_AMOUNT}''')
         data['tags'] = tags
         data['ingredients'] = ingredients
         return super().validate(data)
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
-        recipe = super().create(validated_data)
 
+        if Recipe.objects.filter(author=validated_data['author'],
+                                 name=validated_data['name']).exists():
+            raise ValidationError('Рецепт с таким названием уже существует')
+
+        recipe = super().create(validated_data)
         for ingredient in ingredients:
             RecipeIngredient.objects.update_or_create(
                 recipe=recipe,
@@ -173,8 +187,9 @@ class RecipeSerializer(serializers.ModelSerializer):
 class SubscriptionRecipeListSerializer(serializers.ListSerializer):
     def to_representation(self, data):
         limit = self.context.get('request').query_params.get('recipes_limit')
-        if limit.isnumeric():
-            data = data.all()[:int(limit)]
+        if isinstance(limit, str):
+            if limit.isnumeric():
+                data = data.all()[:int(limit)]
 
         return super().to_representation(data)
 

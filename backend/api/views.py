@@ -246,11 +246,16 @@ class UserViewSet(viewsets.ModelViewSet):
     def create_subscription(self, follower, following):
         sub = Subscription.objects.filter(follower=follower,
                                           following=following)
+        if follower == following:
+            return Response(
+                data={'errors': 'Нельзя подписаться на себя'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         if sub.exists():
             return Response(
                 data={'errors': 'Нельзя подписаться дважды'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                status=status.HTTP_400_BAD_REQUEST)
+
         Subscription.objects.create(follower=follower,
                                     following=following)
         serializer = self.get_subscribtion_serializer(following)

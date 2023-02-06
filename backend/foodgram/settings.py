@@ -38,15 +38,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
-ROOT_URLCONF = 'foodgram.urls'
 
-DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": lambda request: True,
-}
+ROOT_URLCONF = 'foodgram.urls'
 
 TEMPLATES = [
     {
@@ -66,16 +61,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
-if os.environ.get('DJANGO_DEVELOPMENT') == 'True':
-    DEBUG = True
+DEBUG = os.environ.get('DEBUG', False) == 'True'
+print(DEBUG)
+if DEBUG:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         }
     }
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+    DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": lambda request: True,}
 else:
-    DEBUG = False
     DATABASES = {
         'default': {
             'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
@@ -132,3 +129,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+MAX_COOKING_TIME = 900
+MIN_COOKING_TIME = 1
+MAX_INGREDIENT_AMOUNT = 2999
+MIN_INGREDIENT_AMOUNT = 1
+

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -42,14 +43,15 @@ class Subscription(models.Model):
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
-        constraints = [
-            models.UniqueConstraint(fields=['follower', 'following'],
-                                    name='Нельзя подписаться дважды'),
-        ]
-
     def clean(self) -> None:
         if self.follower == self.following:
-            raise ValueError('Нельзя подписаться на себя')
+            raise ValidationError('Нельзя подписаться на себя')
+
+        if Subscription.objects.filter(follower=self.follower,
+                                       following=self.following
+                                       ).exists():
+            raise ValidationError('Нельзя подписаться дважды')
+
         return super().clean()
 
 
