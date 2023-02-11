@@ -68,3 +68,8 @@ class ShoppingCart(models.Model):
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Список покупок'
+
+    def clean(self) -> None:
+        if ShoppingCart.objects.filter(user=self.user,
+                                       recipe=self.recipe).exists():
+            raise ValidationError('Рецепт уже добавлен в список покупок')
