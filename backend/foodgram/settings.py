@@ -62,7 +62,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DEBUG = os.environ.get('DEBUG', False) == 'True'
-print(DEBUG)
 if DEBUG:
     DATABASES = {
         'default': {
@@ -114,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'UTC'
 
