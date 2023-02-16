@@ -59,6 +59,10 @@ password: adm
 docker exec -it back bash
 python manage.py createsuperuser
 ```
+9. Для остановки контейнеров из папки infra выполнить команду:
+```
+docker-compose down
+```
 
 ### Список адресов
 1. Главная страница: http://localhost/
