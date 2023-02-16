@@ -10,15 +10,17 @@ services:
       - ../.env
 
   backend:
-    platform: linux/x86_64
+    # platform: linux/x86_64
     container_name: back
-    image: ilyakhakhalkin/foodgram_backend:latest
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    # image: ilyakhakhalkin/foodgram_backend:latest
     restart: always
     command: >
       bash -c "python manage.py makemigrations &&
       python manage.py migrate &&
       python manage.py collectstatic --noinput &&
-      python manage.py loaddata dump.json &&
       gunicorn --bind 0:8000 foodgram.wsgi"
     volumes:
       - static_value:/back/static/
@@ -29,9 +31,12 @@ services:
       - ../.env
 
   frontend:
-    platform: linux/x86_64
+    # platform: linux/x86_64
     container_name: front
-    image: ilyakhakhalkin/foodgram_frontend:latest
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    # image: ilyakhakhalkin/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
