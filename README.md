@@ -1,5 +1,6 @@
 # Foodgram
 ---
+![example workflow](https://github.com/ilyakhakhalkin/foodgram-project-react/actions/workflows/yamdb_workflow.yml/badge.svg)
 
 Продуктовый помощник - сервис с коллекцией рецептов.
 Позволяет просматривать и добавлять рецепты, подписываться на авторов, сохранять рецепты в избранное и формировать список покупок.
