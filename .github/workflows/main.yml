@@ -72,6 +72,8 @@ jobs:
             sudo docker-compose rm back
             sudo docker-compose rm front
 
+            cd ..
+
             sudo rm .env
 
             echo '${{ secrets.SERVER_ENV_PROD }} ' | sudo tee -a .env >/dev/null
