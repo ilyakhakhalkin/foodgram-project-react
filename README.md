@@ -1,10 +1,7 @@
 # Foodgram
 ---
-![example workflow](https://github.com/ilyakhakhalkin/foodgram-project-react/actions/workflows/main.yml/badge.svg)
 
 Grocery Helper is a recipe collection service that allows users to view and add recipes, subscribe to authors, save recipes to favorites, and create a shopping list.
-
-http://81.200.152.65/
 
 
 ## Tech stack
